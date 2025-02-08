@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            background-color: black;
+            color: lime;
+            font-family: monospace;
+            text-align: center;
+            overflow: hidden;
+            background-image: url('https://www.securitymagazine.com/ext/resources/2023/01/23/hacker-gc04371cad_1920.jpg?1674482112'); /* Replace with a direct image URL */
+            background-size: cover;
+            background-position: center center;
+            background-attachment: fixed;
+        }
+        #score {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            font-size: 20px;
+        }
+        #menu-btn {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 30px;
+            cursor: pointer;
+        }
+        .button {
+            background: lime;
+            color: black;
+            padding: 10px;
+            margin: 10px;
+            border: none;
+            cursor: pointer;
+        }
+        #game {
+            border: 2px solid lime;
+            display: inline-block;
+            padding: 20px;
+            margin-top: 50px;
+        }
+        #store-btn {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            width: 100px;
+            height: 40px;
+        }
+        #fullscreen-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 40px;
+            height: 40px;
+            font-size: 20px;
+            text-align: center;
+        }
+        #store {
+            display: none;
+            position: fixed;
+            width: 300px;
+            height: 200px;
+            background: black;
+            border: 2px solid lime;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 20px;
+            text-align: left;
+            z-index: 1000;
+        }
+        #store h2 {
+            margin-top: 0;
+        }
+        .close-btn {
+            position: absolute;
+            top: 5px;
+            right: 10px;
+            cursor: pointer;
+            color: red;
+        }
+        #answer {
+            width: 80%;
+            padding: 5px;
+            margin-top: 10px;
+            border: 1px solid lime;
+            background: black;
+            color: lime;
+            text-align: center;
+        }
+        #attack-message {
+            color: red;
+            font-size: 20px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        /* Menu UI */
+        #menu-ui {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: black;
+            border: 2px solid lime;
+            padding: 20px;
+            text-align: center;
+            z-index: 1001;
+        }
+        #menu-ui .button {
+            width: 200px;
+        }
+        #close-menu-btn {
+            position: absolute;
+            top: 5px;
+            right: 10px;
+            cursor: pointer;
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <h1>Cyber Surge</h1>
+    <div id="game">
+        <p id="challenge">Press Start to Begin!</p>
+        <button class="button" id="start-btn" onclick="startGame()">Start</button>
+        <br>
+        <input type="text" id="answer" placeholder="Type answer here">
+        <button class="button" id="submit-btn" onclick="checkAnswer()">Submit</button>
+    </div>
+
+    <!-- Menu Button -->
+    <div id="menu-btn">☰</div>
+
+    <!-- Score -->
+    <div id="score">Score: 0</div>
+
+    <!-- Store Button -->
+    <button class="button" id="store-btn" onclick="openStore()">Store</button>
+    
+    <!-- Fullscreen Button -->
+    <button class="button" id="fullscreen-btn" onclick="toggleFullScreen()">⛶</button>
+
+    <!-- Store UI -->
+    <div id="store">
+        <span class="close-btn" onclick="closeStore()">X</span>
+        <h2>Hacker Upgrades</h2>
+        <p><button class="button" onclick="buyUpgrade(50)">Increase Points per Hack (50 pts)</button></p>
+        <p><button class="button" onclick="buyReputation(30)">Boost Reputation (30 pts)</button></p>
+        <p><button class="button" onclick="buyHarderQuestions(100)">Harder Questions Upgrade (100 pts)</button></p>
+    </div>
+
+    <!-- Menu UI -->
+    <div id="menu-ui">
+        <span id="close-menu-btn" onclick="closeMenu()">X</span>
+        <button class="button" onclick="openSupport()">Support</button>
+        <button class="button" disabled>Under Development</button>
+        <button class="button" disabled>Under Development</button>
+    </div>
+
+    <div id="attack-message"></div>
+
+    <script>
+        let score = 0;
+        let reputation = 0;
+        let scoreMultiplier = 1;
+        let currentQuestion = "";
+        let correctAnswer = "";
+        let questionDifficulty = 1; // 1 = easy, 2 = medium, 3 = hard
+        let harderQuestionsPurchased = false;
+        const questionTypes = ['math', 'generalKnowledge', 'pattern'];
+
+        // Show the menu UI when the ☰ button is clicked
+        document.getElementById("menu-btn").onclick = function() {
+            document.getElementById("menu-ui").style.display = "block";
+        };
+
+        // Open the Discord support page
+        function openSupport() {
+            window.open("https://discord.gg/H4MHAKDzzT", "_blank"); // Replace with actual Discord support link
+        }
+
+        // Close the menu UI
+        function closeMenu() {
+            document.getElementById("menu-ui").style.display = "none";
+        }
+
+        function startGame() {
+            document.getElementById("start-btn").style.display = "none"; // Hide Start button
+            document.getElementById("challenge").innerText = "Initializing Hack...";
+            typeEffect("challenge", "ACCESS GRANTED... SYSTEM HACKING IN PROGRESS...", () => {
+                generateQuestion();
+            });
+        }
+
+        function typeEffect(elementId, text, callback) {
+            let i = 0;
+            let speed = 50;
+            let element = document.getElementById(elementId);
+            element.innerText = "";
+            function type() {
+                if (i < text.length) {
+                    element.innerText += text.charAt(i);
+                    i++;
+                    setTimeout(type, speed);
+                } else {
+                    callback();
+                }
+            }
+            type();
+        }
+
+        function generateQuestion() {
+            const randomType = questionTypes[Math.floor(Math.random() * questionTypes.length)];
+            if (randomType === 'math') {
+                generateMathQuestion();
+            } else if (randomType === 'generalKnowledge') {
+                generateGeneralKnowledgeQuestion();
+            } else if (randomType === 'pattern') {
+                generatePatternQuestion();
+            }
+        }
+
+        function generateMathQuestion() {
+            let num1 = Math.floor(Math.random() * (10 * questionDifficulty)) + 1;
+            let num2 = Math.floor(Math.random() * (10 * questionDifficulty)) + 1;
+            currentQuestion = `What is ${num1} + ${num2}?`;
+            correctAnswer = (num1 + num2).toString();
+            document.getElementById("challenge").innerText = currentQuestion;
+        }
+
+        function generateGeneralKnowledgeQuestion() {
+            const questions = [
+                { question: "Who is the CEO of Tesla?", answer: "Elon Musk", difficulty: 2 },
+                { question: "What is the capital of France?", answer: "Paris", difficulty: 1 },
+                { question: "What year did the Titanic sink?", answer: "1912", difficulty: 1 },
+                { question: "What is the largest planet in our solar system?", answer: "Jupiter", difficulty: 2 },
+                { question: "Which element has the chemical symbol 'Fe'?", answer: "Iron", difficulty: 2 },
+                { question: "Who developed the theory of relativity?", answer: "Albert Einstein", difficulty: 3 },
+                { question: "What is the capital of Mongolia?", answer: "Ulaanbaatar", difficulty: 3 },
+                { question: "What is the fastest land animal?", answer: "African cheetah", difficulty: 3},
+                { question: "What is the primary greenhouse gas responsible for global warming?", answer: "carbon dioxide",difficulty: 3},
+                { question: "What is the hardest natural substance on Earth??", answer: "Diamond",difficulty: 3},
+                { question: "What is the closest planet to the Sun?", answer: "Mercury",difficulty: 3 },
+                { question: "What part of the cell is responsible for producing energy?", answer: "mitochondria",difficulty: 3},
+                { question: "What is the chemical formula for water?", answer: "H2O",difficulty: 3},
+                { question: "What is the unit of electrical resistance?", answer: "ohm",difficulty: 3}
+
+            ];
+            const selectedQuestion = questions.filter(q => q.difficulty <= (harderQuestionsPurchased ? 3 : questionDifficulty))[Math.floor(Math.random() * questions.length)];
+            currentQuestion = selectedQuestion.question;
+            correctAnswer = selectedQuestion.answer;
+            document.getElementById("challenge").innerText = currentQuestion;
+        }
+
+        function generatePatternQuestion() {
+            const patterns = [
+                { question: "What comes next: 1, 2, 3, 4, ?", answer: "5", difficulty: 1 },
+                { question: "What comes next: A, B, C, D, ?", answer: "E", difficulty: 1 },
+                { question: "What comes next: Red, Green, Blue, ?", answer: "Yellow", difficulty: 2 },
+                { question: "What comes next: 2, 4, 6, 8, ?", answer: "10", difficulty: 2 },
+                { question: "What comes next: 5, 10, 15, 20, ?", answer: "25", difficulty: 3 },
+                { question: "What comes next: 1, 2, 3, 4, 5, 6, ?", answer: "13", difficulty: 3 }
+            ];
+            const selectedPattern = patterns.filter(p => p.difficulty <= (harderQuestionsPurchased ? 3 : questionDifficulty))[Math.floor(Math.random() * patterns.length)];
+            currentQuestion = selectedPattern.question;
+            correctAnswer = selectedPattern.answer;
+            document.getElementById("challenge").innerText = currentQuestion;
+        }
+
+        function checkAnswer() {
+            const playerAnswer = document.getElementById("answer").value.trim();
+            if (playerAnswer.toLowerCase() === correctAnswer.toLowerCase()) {
+                score += 10 * scoreMultiplier;
+                updateUI();
+                generateQuestion();
+            } else {
+                displayAttackMessage("Incorrect! Try again!");
+            }
+        }
+
+        function updateUI() {
+            document.getElementById("score").innerText = `Score: ${score}`;
+        }
+
+        function displayAttackMessage(message) {
+            let attackMessageElement = document.getElementById("attack-message");
+            attackMessageElement.innerText = message;
+            attackMessageElement.style.display = "block";
+            setTimeout(() => {
+                attackMessageElement.style.display = "none";
+            }, 2000);
+        }
+
+        function toggleFullScreen() {
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen();
+            } else if (document.documentElement.mozRequestFullScreen) {
+                document.documentElement.mozRequestFullScreen();
+            } else if (document.documentElement.webkitRequestFullscreen) {
+                document.documentElement.webkitRequestFullscreen();
+            } else if (document.documentElement.msRequestFullscreen) {
+                document.documentElement.msRequestFullscreen();
+            }
+        }
+
+        // Store functionality
+        function openStore() {
+            document.getElementById("store").style.display = "block";
+        }
+
+        function closeStore() {
+            document.getElementById("store").style.display = "none";
+        }
+
+        function buyUpgrade(cost) {
+            if (score >= cost) {
+                score -= cost;
+                scoreMultiplier *= 1.5; // Increase points multiplier
+                updateUI();
+            }
+        }
+
+        function buyReputation(cost) {
+            if (score >= cost) {
+                score -= cost;
+                reputation += 10; // Increase reputation
+            }
+        }
+
+        function buyHarderQuestions(cost) {
+            if (score >= cost) {
+                score -= cost;
+                harderQuestionsPurchased = true;
+                questionDifficulty = 3; // Unlock hardest questions
+            }
+        }
+    </script>
+</body>
+</html>
